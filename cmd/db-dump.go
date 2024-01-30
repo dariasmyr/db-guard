@@ -1,8 +1,10 @@
 package main
 
 import (
+	"compress/gzip"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -101,6 +103,9 @@ func backupDatabase(host string, port int, user string, password string, databas
 		return fmt.Errorf("failed to set PGPASSWORD: %v", err)
 	}
 
+	// Construct backup file path
+	backupFilePath := filepath.Join(backupDir, backupFileName)
+
 	// Construct backup command
 	log.Printf("Construct backup command")
 	cmdArgs := []string{
@@ -108,17 +113,7 @@ func backupDatabase(host string, port int, user string, password string, databas
 		"-p", strconv.Itoa(port),
 		"-U", user,
 		"-d", database,
-	}
-
-	// Specify the backup file path
-	backupFilePath := filepath.Join(backupDir, backupFileName)
-
-	// If compression is enabled, add compression option
-	if compress {
-		backupFilePath += ".gz"
-		cmdArgs = append(cmdArgs, "|", "gzip", ">", backupFilePath)
-	} else {
-		cmdArgs = append(cmdArgs, "-f", backupFilePath)
+		"-f", backupFilePath,
 	}
 
 	// Combine commands with shell
@@ -129,6 +124,37 @@ func backupDatabase(host string, port int, user string, password string, databas
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("backup failed: %v\n%s", err, string(output))
+	}
+
+	// If compression is enabled, compress the backup file
+	if compress {
+		log.Printf("Compressing backup file")
+		backupFile, err := os.Open(backupFilePath)
+		if err != nil {
+			return fmt.Errorf("failed to open backup file: %v", err)
+		}
+		defer backupFile.Close()
+
+		backupFileGz, err := os.Create(backupFilePath + ".gz")
+		if err != nil {
+			return fmt.Errorf("failed to create compressed backup file: %v", err)
+		}
+		defer backupFileGz.Close()
+
+		// Compress backup file using gzip
+		backupGz := gzip.NewWriter(backupFileGz)
+		defer backupGz.Close()
+
+		_, err = io.Copy(backupGz, backupFile)
+		if err != nil {
+			return fmt.Errorf("failed to compress backup file: %v", err)
+		}
+
+		// Remove the uncompressed backup file
+		err = os.Remove(backupFilePath)
+		if err != nil {
+			return fmt.Errorf("failed to remove uncompressed backup file: %v", err)
+		}
 	}
 
 	log.Printf("Database %s backed up successfully to %s\n", database, backupFileName)
