@@ -164,7 +164,7 @@ func backupDatabase(host string, port int, user string, password string, databas
 func cleanupBackups(backupDir string, maxBackupCount int) {
 	// List backup files
 	log.Printf("List backup files")
-	files, err := filepath.Glob(filepath.Join(backupDir, "*.sql"))
+	files, err := filepath.Glob(filepath.Join(backupDir, "*.sql*"))
 	if err != nil {
 		log.Println("Error listing backup files:", err)
 		return
@@ -174,7 +174,8 @@ func cleanupBackups(backupDir string, maxBackupCount int) {
 	sortBackupFiles(files)
 
 	// Delete excess backup files
-	log.Printf("Delete excess backup files")
+	log.Printf("Delete excess backup files, maxBackupCount: %d", maxBackupCount)
+	log.Printf("Length of files %d", len(files))
 	if len(files) > maxBackupCount {
 		filesToDelete := files[:len(files)-maxBackupCount]
 		for _, file := range filesToDelete {
