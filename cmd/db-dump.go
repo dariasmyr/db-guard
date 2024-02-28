@@ -89,7 +89,6 @@ func main() {
 
 func backupDatabase(host string, port int, user string, password string, database string, backupDir string, compress bool) error {
 	// Format current time for backup file name
-	log.Printf("Format current time for backup file name")
 	backupFileName := fmt.Sprintf("%s-%s.sql", database, time.Now().Format("20060102_150405"))
 
 	// Check if password is provided
@@ -106,29 +105,39 @@ func backupDatabase(host string, port int, user string, password string, databas
 	// Construct backup file path
 	backupFilePath := filepath.Join(backupDir, backupFileName)
 
+	// Create the backup file
+	backupFile, err := os.Create(backupFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to create backup file: %v", err)
+	}
+	defer backupFile.Close()
+
 	// Construct backup command
-	log.Printf("Construct backup command")
 	cmdArgs := []string{
 		"-h", host,
 		"-p", strconv.Itoa(port),
 		"-U", user,
 		"-d", database,
-		"-f", backupFilePath,
 	}
 
 	// Combine commands with shell
 	cmd := exec.Command("pg_dump", cmdArgs...)
 	log.Printf("CMD: %v", cmd)
 
+	// Redirect command output to backup file
+	cmd.Stdout = backupFile
+
 	// Execute backup command
-	output, err := cmd.CombinedOutput()
+	err = cmd.Run()
 	if err != nil {
-		return fmt.Errorf("backup failed: %v\n%s", err, string(output))
+		return fmt.Errorf("backup failed: %v", err)
 	}
 
 	// If compression is enabled, compress the backup file
 	if compress {
 		log.Printf("Compressing backup file")
+		backupFile.Close() // Close the file before compressing
+
 		backupFile, err := os.Open(backupFilePath)
 		if err != nil {
 			return fmt.Errorf("failed to open backup file: %v", err)
