@@ -64,26 +64,33 @@ func main() {
 		os.Mkdir(backupDir, os.ModePerm)
 	}
 
-	// Initial backup
-	log.Printf("Initial backup")
-	if err := backupDatabase(host, port, user, password, database, backupDir, compress); err != nil {
-		log.Fatal(err)
-	}
+	backupDone := make(chan struct{})
 
-	// Start backup routine
-	log.Printf("Start backup routine")
-	ticker := time.NewTicker(time.Duration(intervalSec) * time.Second)
-	defer ticker.Stop()
+	// Start main routine
+	go func() {
+		defer close(backupDone)
 
-	for {
-		log.Printf("Starting new backup cycle")
-		select {
-		case <-ticker.C:
-			if err := backupDatabase(host, port, user, password, database, backupDir, compress); err != nil {
-				log.Println("Error backing up database:", err)
+		ticker := time.NewTicker(time.Duration(intervalSec) * time.Second)
+		defer ticker.Stop()
+
+		for {
+			log.Printf("Starting new backup cycle")
+			select {
+			case <-ticker.C:
+				go func() {
+					log.Printf("Initial backup")
+					if err := backupDatabase(host, port, user, password, database, backupDir, compress); err != nil {
+						log.Println("Error backing up database:", err)
+					}
+				}()
+				cleanupBackups(backupDir, maxBackupCount)
 			}
-			cleanupBackups(backupDir, maxBackupCount)
 		}
+	}()
+
+	select {
+	case <-backupDone:
+		log.Println("Backup completed")
 	}
 }
 
