@@ -2,6 +2,7 @@ package main
 
 import (
 	"compress/gzip"
+	"db_dump/internal"
 	"flag"
 	"fmt"
 	"io"
@@ -11,12 +12,21 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
+	"sync"
 	"time"
+)
 
-	_ "github.com/lib/pq"
+type DatabaseBackupStatus struct {
+	running bool
+}
+
+var (
+	statusMap      map[string]*DatabaseBackupStatus
+	statusMapMutex sync.Mutex
 )
 
 func main() {
+	internal.StartBot()
 	var (
 		host           string
 		port           int
@@ -64,6 +74,8 @@ func main() {
 		os.Mkdir(backupDir, os.ModePerm)
 	}
 
+	statusMap = make(map[string]*DatabaseBackupStatus)
+
 	backupDone := make(chan struct{})
 
 	// Start main routine
@@ -77,7 +89,21 @@ func main() {
 			log.Printf("Starting new backup cycle")
 			select {
 			case <-ticker.C:
+				// Check if backup for this database is already running
+				if isBackupRunning(database) {
+					log.Printf("Backup for database %s is already running, skipping this cycle", database)
+					continue
+				}
+
+				// Mark backup for this database as running
+				setBackupRunning(database, true)
+
 				go func() {
+					defer func() {
+						// Mark backup for this database as not running after completion
+						setBackupRunning(database, false)
+					}()
+
 					log.Printf("Initial backup")
 					if err := backupDatabase(host, port, user, password, database, backupDir, compress); err != nil {
 						log.Println("Error backing up database:", err)
@@ -91,6 +117,23 @@ func main() {
 	select {
 	case <-backupDone:
 		log.Println("Backup completed")
+	}
+}
+
+func isBackupRunning(database string) bool {
+	statusMapMutex.Lock()
+	defer statusMapMutex.Unlock()
+	status, exists := statusMap[database]
+	return exists && status.running
+}
+
+func setBackupRunning(database string, running bool) {
+	statusMapMutex.Lock()
+	defer statusMapMutex.Unlock()
+	if status, exists := statusMap[database]; exists {
+		status.running = running
+	} else {
+		statusMap[database] = &DatabaseBackupStatus{running: running}
 	}
 }
 
