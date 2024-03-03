@@ -37,6 +37,7 @@ func main() {
 		intervalSec    int
 		compress       bool
 		backupDir      string
+		telegramNotify bool
 	)
 
 	flag.StringVar(&host, "host", "localhost", "Database host")
@@ -48,6 +49,7 @@ func main() {
 	flag.IntVar(&intervalSec, "interval-seconds", 60, "Interval in seconds between backups")
 	flag.BoolVar(&compress, "compress", false, "Compress backups")
 	flag.StringVar(&backupDir, "dir", "backups", "Backup directory")
+	flag.BoolVar(&telegramNotify, "telegram-notifications", false, "Telegram notifications")
 
 	log.Printf("Start parsing flags")
 
@@ -105,7 +107,7 @@ func main() {
 					}()
 
 					log.Printf("Initial backup")
-					if err := backupDatabase(host, port, user, password, database, backupDir, compress); err != nil {
+					if err := backupDatabase(host, port, user, password, database, backupDir, compress, telegramNotify); err != nil {
 						log.Println("Error backing up database:", err)
 					}
 				}()
@@ -137,7 +139,7 @@ func setBackupRunning(database string, running bool) {
 	}
 }
 
-func backupDatabase(host string, port int, user string, password string, database string, backupDir string, compress bool) error {
+func backupDatabase(host string, port int, user string, password string, database string, backupDir string, compress bool, telegramNotify bool) error {
 	// Format current time for backup file name
 	backupFileName := fmt.Sprintf("%s-%s.sql", database, time.Now().Format("20060102_150405"))
 
@@ -218,9 +220,11 @@ func backupDatabase(host string, port int, user string, password string, databas
 
 	log.Printf("Database %s backed up successfully to %s\n", database, backupFileName)
 
-	var channelID int64
-	channelID, err = strconv.ParseInt(os.Getenv("CHANNEL_ID"), 10, 64)
-	_ = internal.SendMessage(channelID, fmt.Sprintf("Database %s backed up successfully to %s\n", database, backupFileName))
+	if telegramNotify {
+		var channelID int64
+		channelID, err = strconv.ParseInt(os.Getenv("CHANNEL_ID"), 10, 64)
+		_ = internal.SendMessage(channelID, fmt.Sprintf("Database %s backed up successfully to %s\n", database, backupFileName))
+	}
 	return nil
 }
 
