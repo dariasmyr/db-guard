@@ -2,8 +2,8 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-telegram/bot/models"
-	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"os/signal"
@@ -11,25 +11,31 @@ import (
 	"github.com/go-telegram/bot"
 )
 
+var tgBot *bot.Bot
+
 func StartBot() {
+	fmt.Println("Starting bot")
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	err := godotenv.Load()
+	var err error
+
 	opts := []bot.Option{
 		bot.WithDefaultHandler(defaultHandler),
 	}
 
-	b, err := bot.New(os.Getenv("TELEGRAM_BOT_TOKEN"), opts...)
+	tgBot, err = bot.New(os.Getenv("TELEGRAM_BOT_TOKEN"), opts...)
 
 	if err != nil {
 		panic(err)
 	}
 
-	b.Start(ctx)
+	tgBot.Start(ctx)
 }
 
 func defaultHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
+	fmt.Printf("Received message: %s, chatID: %d\n", update.Message.Text, update.Message.Chat.ID)
+	SendMessage(update.Message.Chat.ID, "Received message: "+update.Message.Text)
 	_, err := b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
 		Text:   "Bot started",
@@ -41,19 +47,9 @@ func defaultHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 }
 
 func SendMessage(chatID int64, text string) error {
-	ctx := context.Background()
-	b, err := bot.New(os.Getenv("TELEGRAM_BOT_TOKEN"))
-	if err != nil {
-		return err
-	}
-
-	_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+	_, err := tgBot.SendMessage(context.Background(), &bot.SendMessageParams{
 		ChatID: chatID,
 		Text:   text,
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

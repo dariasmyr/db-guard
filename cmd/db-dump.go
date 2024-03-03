@@ -26,7 +26,7 @@ var (
 )
 
 func main() {
-	internal.StartBot()
+	go internal.StartBot()
 	var (
 		host           string
 		port           int
@@ -217,6 +217,10 @@ func backupDatabase(host string, port int, user string, password string, databas
 	}
 
 	log.Printf("Database %s backed up successfully to %s\n", database, backupFileName)
+
+	var channelID int64
+	channelID, err = strconv.ParseInt(os.Getenv("CHANNEL_ID"), 10, 64)
+	_ = internal.SendMessage(channelID, fmt.Sprintf("Database %s backed up successfully to %s\n", database, backupFileName))
 	return nil
 }
 
