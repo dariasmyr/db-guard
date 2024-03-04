@@ -47,7 +47,7 @@ func main() {
 	flag.StringVar(&database, "database", "", "Database name")
 	flag.IntVar(&maxBackupCount, "max-backup-count", 10, "Maximum number of backups to keep")
 	flag.IntVar(&intervalSec, "interval-seconds", 60, "Interval in seconds between backups")
-	flag.BoolVar(&compress, "compress", false, "Compress backups")
+	flag.BoolVar(&compress, "compress", true, "Compress backups")
 	flag.StringVar(&backupDir, "dir", "backups", "Backup directory")
 	flag.BoolVar(&telegramNotify, "telegram-notifications", false, "Telegram notifications")
 
