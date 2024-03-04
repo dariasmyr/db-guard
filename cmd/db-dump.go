@@ -26,30 +26,8 @@ var (
 )
 
 func main() {
+	internal.InitParams()
 	go internal.StartBot()
-	var (
-		host           string
-		port           int
-		user           string
-		password       string
-		database       string
-		maxBackupCount int
-		intervalSec    int
-		compress       bool
-		backupDir      string
-		telegramNotify bool
-	)
-
-	flag.StringVar(&host, "host", "localhost", "Database host")
-	flag.IntVar(&port, "port", 5432, "Database port")
-	flag.StringVar(&user, "user", "", "Database user")
-	flag.StringVar(&password, "password", "", "Database password")
-	flag.StringVar(&database, "database", "", "Database name")
-	flag.IntVar(&maxBackupCount, "max-backup-count", 10, "Maximum number of backups to keep")
-	flag.IntVar(&intervalSec, "interval-seconds", 60, "Interval in seconds between backups")
-	flag.BoolVar(&compress, "compress", true, "Compress backups")
-	flag.StringVar(&backupDir, "dir", "backups", "Backup directory")
-	flag.BoolVar(&telegramNotify, "telegram-notifications", false, "Telegram notifications")
 
 	log.Printf("Start parsing flags")
 
@@ -65,15 +43,16 @@ func main() {
 
 	// Ensure required flags are provided
 	log.Printf("Ensure required flags are provided")
-	if user == "" || password == "" || database == "" {
+	if internal.User == "" || internal.Password == "" || internal.Database == "" {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
 	// Ensure backup directory exists
 	log.Println("Ensure backup directory exists")
-	if _, err := os.Stat(backupDir); os.IsNotExist(err) {
-		os.Mkdir(backupDir, os.ModePerm)
+	backupDataDir := filepath.Join(internal.BackupDir)
+	if _, err := os.Stat(backupDataDir); os.IsNotExist(err) {
+		os.Mkdir(backupDataDir, os.ModePerm)
 	}
 
 	statusMap = make(map[string]*DatabaseBackupStatus)
@@ -84,7 +63,7 @@ func main() {
 	go func() {
 		defer close(backupDone)
 
-		ticker := time.NewTicker(time.Duration(intervalSec) * time.Second)
+		ticker := time.NewTicker(time.Duration(internal.IntervalSec) * time.Second)
 		defer ticker.Stop()
 
 		for {
@@ -92,26 +71,26 @@ func main() {
 			select {
 			case <-ticker.C:
 				// Check if backup for this database is already running
-				if isBackupRunning(database) {
-					log.Printf("Backup for database %s is already running, skipping this cycle", database)
+				if isBackupRunning(internal.Database) {
+					log.Printf("Backup for database %s is already running, skipping this cycle", internal.Database)
 					continue
 				}
 
 				// Mark backup for this database as running
-				setBackupRunning(database, true)
+				setBackupRunning(internal.Database, true)
 
 				go func() {
 					defer func() {
 						// Mark backup for this database as not running after completion
-						setBackupRunning(database, false)
+						setBackupRunning(internal.Database, false)
 					}()
 
 					log.Printf("Initial backup")
-					if err := backupDatabase(host, port, user, password, database, backupDir, compress, telegramNotify); err != nil {
+					if err := backupDatabase(internal.Host, internal.Port, internal.User, internal.Password, internal.Database, internal.BackupDir, internal.Compress, internal.TelegramNotify); err != nil {
 						log.Println("Error backing up database:", err)
 					}
 				}()
-				cleanupBackups(backupDir, maxBackupCount)
+				cleanupBackups(internal.BackupDir, internal.MaxBackupCount)
 			}
 		}
 	}()
