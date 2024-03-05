@@ -1,8 +1,4 @@
-<div style="text-align: center;">
-    <img src="docs/logo.jpg"
-         alt="Logo"
-         style="width: 100%; height: auto;" />
-</div>
+![Logo](docs/logo.jpg)
 # DB Guard
 
 DB Guard is a Golang project designed to automate the backup process of databases at specified intervals. It includes a Telegram notification feature to provide status updates for each backup and utilizes parallel file archiving to save disk space.
