@@ -1,11 +1,7 @@
-<div style="text-align: center;">
-    <img src="docs/logo.jpg"
-         alt="Logo"
-         style="width: 50%; height: auto;" />
-</div>
-# DB Dump
+![Logo](docs/logo.jpg)
+# DB Guard
 
-DB Dump is a Golang project designed to automate the backup process of databases at specified intervals. It includes a Telegram notification feature to provide status updates for each backup and utilizes parallel file archiving to save disk space.
+DB Guard is a Golang project designed to automate the backup process of databases at specified intervals. It includes a Telegram notification feature to provide status updates for each backup and utilizes parallel file archiving to save disk space.
 
 Currently, the project supports backups of PostgreSQL databases using `pg_dump`.
 
