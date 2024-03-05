@@ -27,7 +27,9 @@ var (
 
 func main() {
 	internal.InitParams()
-	go internal.StartBot()
+	if os.Getenv("TELEGRAM_BOT_TOKEN") != "" && os.Getenv("CHANNEL_ID") != "" {
+		go internal.StartBot()
+	}
 
 	log.Printf("Start parsing flags")
 
@@ -161,6 +163,16 @@ func backupDatabase(host string, port int, user string, password string, databas
 	// Execute backup command
 	err = cmd.Run()
 	if err != nil {
+		// In case of backup failure, remove the partially created backup file
+		os.Remove(backupFilePath)
+		// Send Telegram notification about the backup error
+		if telegramNotify {
+			if os.Getenv("TELEGRAM_BOT_TOKEN") != "" && os.Getenv("CHANNEL_ID") != "" {
+				var channelID int64
+				channelID, err = strconv.ParseInt(os.Getenv("CHANNEL_ID"), 10, 64)
+				_ = internal.SendMessage(channelID, fmt.Sprintf("Error backing up database %s❗️", database))
+			}
+		}
 		return fmt.Errorf("backup failed: %v", err)
 	}
 
@@ -168,6 +180,8 @@ func backupDatabase(host string, port int, user string, password string, databas
 	if compress {
 		log.Printf("Compressing backup file")
 		backupFile.Close() // Close the file before compressing
+
+		backupFileName += ".gz"
 
 		backupFile, err := os.Open(backupFilePath)
 		if err != nil {
@@ -197,12 +211,12 @@ func backupDatabase(host string, port int, user string, password string, databas
 		}
 	}
 
-	log.Printf("Database %s backed up successfully to %s\n", database, backupFileName)
+	log.Printf("Database %s backed up successfully. File name: %s\n", database, backupFileName)
 
-	if telegramNotify {
+	if telegramNotify && os.Getenv("TELEGRAM_BOT_TOKEN") != "" && os.Getenv("CHANNEL_ID") != "" {
 		var channelID int64
 		channelID, err = strconv.ParseInt(os.Getenv("CHANNEL_ID"), 10, 64)
-		_ = internal.SendMessage(channelID, fmt.Sprintf("Database %s backed up successfully to %s\n", database, backupFileName))
+		_ = internal.SendMessage(channelID, fmt.Sprintf("🎉Database %s backed up successfully.\nFile name: %s", database, backupFileName))
 	}
 	return nil
 }

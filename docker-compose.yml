@@ -1,6 +1,13 @@
 version: '3.3'
+
+networks:
+  database:
+    external: true
+
 services:
   app:
+    networks:
+      - database
     build:
       context: .
       dockerfile: Dockerfile
