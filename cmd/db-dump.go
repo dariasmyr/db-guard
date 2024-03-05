@@ -5,7 +5,6 @@ import (
 	"db_dump/internal"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -121,8 +120,12 @@ func setBackupRunning(database string, running bool) {
 }
 
 func backupDatabase(host string, port int, user string, password string, database string, backupDir string, compress bool, telegramNotify bool) error {
+	var fileExtension string = "sql"
+	if compress {
+		fileExtension = "sql.gz"
+	}
 	// Format current time for backup file name
-	backupFileName := fmt.Sprintf("%s-%s.sql", database, time.Now().Format("20060102_150405"))
+	backupFileName := fmt.Sprintf("%s-%s.%s", database, time.Now().Format("2006-01-02T15-04-05"), fileExtension)
 
 	// Check if password is provided
 	if password == "" {
@@ -145,6 +148,13 @@ func backupDatabase(host string, port int, user string, password string, databas
 	}
 	defer backupFile.Close()
 
+	compressionLevel := gzip.DefaultCompression
+	gzipWriter, err := gzip.NewWriterLevel(backupFile, compressionLevel)
+	if err != nil {
+		return fmt.Errorf("failed to create gzip writer: %v", err)
+	}
+	defer gzipWriter.Close()
+
 	// Construct backup command
 	cmdArgs := []string{
 		"-h", host,
@@ -158,7 +168,11 @@ func backupDatabase(host string, port int, user string, password string, databas
 	log.Printf("CMD: %v", cmd)
 
 	// Redirect command output to backup file
-	cmd.Stdout = backupFile
+	if compress {
+		cmd.Stdout = gzipWriter
+	} else {
+		cmd.Stdout = backupFile
+	}
 
 	// Execute backup command
 	err = cmd.Run()
@@ -174,41 +188,6 @@ func backupDatabase(host string, port int, user string, password string, databas
 			}
 		}
 		return fmt.Errorf("backup failed: %v", err)
-	}
-
-	// If compression is enabled, compress the backup file
-	if compress {
-		log.Printf("Compressing backup file")
-		backupFile.Close() // Close the file before compressing
-
-		backupFileName += ".gz"
-
-		backupFile, err := os.Open(backupFilePath)
-		if err != nil {
-			return fmt.Errorf("failed to open backup file: %v", err)
-		}
-		defer backupFile.Close()
-
-		backupFileGz, err := os.Create(backupFilePath + ".gz")
-		if err != nil {
-			return fmt.Errorf("failed to create compressed backup file: %v", err)
-		}
-		defer backupFileGz.Close()
-
-		// Compress backup file using gzip
-		backupGz := gzip.NewWriter(backupFileGz)
-		defer backupGz.Close()
-
-		_, err = io.Copy(backupGz, backupFile)
-		if err != nil {
-			return fmt.Errorf("failed to compress backup file: %v", err)
-		}
-
-		// Remove the uncompressed backup file
-		err = os.Remove(backupFilePath)
-		if err != nil {
-			return fmt.Errorf("failed to remove uncompressed backup file: %v", err)
-		}
 	}
 
 	log.Printf("Database %s backed up successfully. File name: %s\n", database, backupFileName)
