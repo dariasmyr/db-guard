@@ -87,7 +87,7 @@ func main() {
 					}()
 
 					log.Printf("Initial backup")
-					if err := backupDatabase(internal.Host, internal.Port, internal.User, internal.Password, internal.Database, internal.BackupDir, internal.Compress, internal.TelegramNotify); err != nil {
+					if err := backupDatabase(internal.Host, internal.Port, internal.User, internal.Password, internal.Database, internal.BackupDir, internal.Compress, internal.CompressionLevel, internal.TelegramNotify); err != nil {
 						log.Println("Error backing up database:", err)
 					}
 				}()
@@ -119,7 +119,7 @@ func setBackupRunning(database string, running bool) {
 	}
 }
 
-func backupDatabase(host string, port int, user string, password string, database string, backupDir string, compress bool, telegramNotify bool) error {
+func backupDatabase(host string, port int, user string, password string, database string, backupDir string, compress bool, compressionLevel int, telegramNotify bool) error {
 	var fileExtension string = "sql"
 	if compress {
 		fileExtension = "sql.gz"
@@ -148,7 +148,21 @@ func backupDatabase(host string, port int, user string, password string, databas
 	}
 	defer backupFile.Close()
 
-	compressionLevel := gzip.DefaultCompression
+	if compressionLevel < -2 || compressionLevel > 9 {
+		return fmt.Errorf("invalid compression level: %d", compressionLevel)
+	}
+	if compressionLevel == -1 {
+		compressionLevel = gzip.DefaultCompression
+	} else if compressionLevel == -2 {
+		compressionLevel = gzip.HuffmanOnly
+	} else if compressionLevel < 0 {
+		compressionLevel = gzip.NoCompression
+	} else if compressionLevel > 9 {
+		compressionLevel = gzip.BestCompression
+	} else {
+		compressionLevel = gzip.BestSpeed
+	}
+
 	gzipWriter, err := gzip.NewWriterLevel(backupFile, compressionLevel)
 	if err != nil {
 		return fmt.Errorf("failed to create gzip writer: %v", err)

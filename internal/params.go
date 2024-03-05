@@ -7,16 +7,17 @@ import (
 )
 
 var (
-	Host           string
-	Port           int
-	User           string
-	Password       string
-	Database       string
-	MaxBackupCount int
-	IntervalSec    int
-	Compress       bool
-	BackupDir      string
-	TelegramNotify bool
+	Host             string
+	Port             int
+	User             string
+	Password         string
+	Database         string
+	MaxBackupCount   int
+	IntervalSec      int
+	Compress         bool
+	CompressionLevel int
+	BackupDir        string
+	TelegramNotify   bool
 )
 
 func InitParams() {
@@ -29,6 +30,7 @@ func InitParams() {
 	flag.IntVar(&MaxBackupCount, "max-backup-count", getEnvAsInt("MAX_BACKUP_COUNT", 10), "Maximum number of backups to keep")
 	flag.IntVar(&IntervalSec, "interval-seconds", getEnvAsInt("INTERVAL_SECONDS", 60), "Interval in seconds between backups")
 	flag.BoolVar(&Compress, "compress", getEnvAsBool("COMPRESS", true), "Compress backups")
+	flag.IntVar(&CompressionLevel, "compression-level", getEnvAsInt("COMPRESSION_LEVEL", -1), "Compression level")
 	flag.StringVar(&BackupDir, "dir", getEnv("BACKUP_DIR", "backups"), "Backup directory")
 	flag.BoolVar(&TelegramNotify, "telegram-notifications", getEnvAsBool("TELEGRAM_NOTIFICATIONS", false), "Telegram notifications")
 
