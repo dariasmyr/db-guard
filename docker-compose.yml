@@ -1,13 +1,15 @@
 version: '3.3'
 
-networks:
-  database:
-    external: true
+// Uncomment in case your database is running outside (in other network)
+# networks:
+#   database:
+#     external: true
 
 services:
   app:
-    networks:
-      - database
+    // Uncomment in case your database is running outside (in other network)
+    # networks:
+    #   - database
     build:
       context: .
       dockerfile: Dockerfile

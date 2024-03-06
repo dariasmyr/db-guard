@@ -120,17 +120,8 @@ func setBackupRunning(database string, running bool) {
 }
 
 func backupDatabase(host string, port int, user string, password string, database string, backupDir string, compress bool, compressionLevel int, telegramNotify bool) error {
-	var fileExtension string = "sql"
-	if compress {
-		fileExtension = "sql.gz"
-	}
-	// Format current time for backup file name
-	backupFileName := fmt.Sprintf("%s-%s.%s", database, time.Now().Format("2006-01-02T15-04-05"), fileExtension)
-
-	// Check if password is provided
 	if password == "" {
-		flag.PrintDefaults()
-		log.Fatal("Database password is required")
+		return fmt.Errorf("database password is required")
 	}
 
 	err := os.Setenv("PGPASSWORD", password)
@@ -138,81 +129,101 @@ func backupDatabase(host string, port int, user string, password string, databas
 		return fmt.Errorf("failed to set PGPASSWORD: %v", err)
 	}
 
-	// Construct backup file path
+	backupFileName := generateBackupFileName(database, compress)
+
 	backupFilePath := filepath.Join(backupDir, backupFileName)
 
-	// Create the backup file
-	backupFile, err := os.Create(backupFilePath)
+	backupFile, err := createBackupFile(backupFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to create backup file: %v", err)
 	}
 	defer backupFile.Close()
 
-	if compressionLevel < -2 || compressionLevel > 9 {
-		return fmt.Errorf("invalid compression level: %d", compressionLevel)
-	}
-	if compressionLevel == -1 {
-		compressionLevel = gzip.DefaultCompression
-	} else if compressionLevel == -2 {
-		compressionLevel = gzip.HuffmanOnly
-	} else if compressionLevel < 0 {
-		compressionLevel = gzip.NoCompression
-	} else if compressionLevel > 9 {
-		compressionLevel = gzip.BestCompression
-	} else {
-		compressionLevel = gzip.BestSpeed
-	}
+	compressionLevel = adjustCompressionLevel(compressionLevel)
 
-	gzipWriter, err := gzip.NewWriterLevel(backupFile, compressionLevel)
+	gzipWriter, err := createGzipWriter(backupFile, compressionLevel)
 	if err != nil {
 		return fmt.Errorf("failed to create gzip writer: %v", err)
 	}
 	defer gzipWriter.Close()
 
-	// Construct backup command
-	cmdArgs := []string{
-		"-h", host,
-		"-p", strconv.Itoa(port),
-		"-U", user,
-		"-d", database,
+	cmdArgs := constructPgDumpCommandArgs(host, port, user, database)
+
+	err = executeBackupCommand(cmdArgs, compress, gzipWriter, backupFile)
+	if err != nil {
+		handleBackupFailure(err, backupFilePath, database, telegramNotify)
+		return fmt.Errorf("backup failed: %v", err)
 	}
 
-	// Combine commands with shell
-	cmd := exec.Command("pg_dump", cmdArgs...)
-	log.Printf("CMD: %v", cmd)
+	handleBackupSuccess(telegramNotify, backupFilePath, database, backupFileName)
 
-	// Redirect command output to backup file
+	return nil
+}
+
+func generateBackupFileName(database string, compress bool) string {
+	fileExtension := "sql"
+	if compress {
+		fileExtension = "sql.gz"
+	}
+	return fmt.Sprintf("%s-%s.%s", database, time.Now().Format("2006-01-02T15-04-05"), fileExtension)
+}
+
+func createBackupFile(backupFilePath string) (*os.File, error) {
+	return os.Create(backupFilePath)
+}
+
+func adjustCompressionLevel(compressionLevel int) int {
+	if compressionLevel < -2 || compressionLevel > 9 {
+		return gzip.BestCompression
+	}
+	if compressionLevel == -1 {
+		return gzip.DefaultCompression
+	} else if compressionLevel == -2 {
+		return gzip.HuffmanOnly
+	}
+	return compressionLevel
+}
+
+func createGzipWriter(backupFile *os.File, compressionLevel int) (*gzip.Writer, error) {
+	return gzip.NewWriterLevel(backupFile, compressionLevel)
+}
+
+func constructPgDumpCommandArgs(host string, port int, user string, database string) []string {
+	return []string{"-h", host, "-p", strconv.Itoa(port), "-U", user, "-d", database}
+}
+
+func executeBackupCommand(cmdArgs []string, compress bool, gzipWriter *gzip.Writer, backupFile *os.File) error {
+	cmd := exec.Command("pg_dump", cmdArgs...)
 	if compress {
 		cmd.Stdout = gzipWriter
 	} else {
 		cmd.Stdout = backupFile
 	}
-
-	// Execute backup command
-	err = cmd.Run()
-	if err != nil {
-		// In case of backup failure, remove the partially created backup file
-		os.Remove(backupFilePath)
-		// Send Telegram notification about the backup error
-		if telegramNotify {
-			if os.Getenv("TELEGRAM_BOT_TOKEN") != "" && os.Getenv("CHANNEL_ID") != "" {
-				var channelID int64
-				channelID, err = strconv.ParseInt(os.Getenv("CHANNEL_ID"), 10, 64)
-				_ = internal.SendMessage(channelID, fmt.Sprintf("Error backing up database %s❗️", database))
-			}
-		}
-		return fmt.Errorf("backup failed: %v", err)
-	}
-
-	log.Printf("Database %s backed up successfully. File name: %s\n", database, backupFileName)
-
-	if telegramNotify && os.Getenv("TELEGRAM_BOT_TOKEN") != "" && os.Getenv("CHANNEL_ID") != "" {
-		var channelID int64
-		channelID, err = strconv.ParseInt(os.Getenv("CHANNEL_ID"), 10, 64)
-		_ = internal.SendMessage(channelID, fmt.Sprintf("🎉Database %s backed up successfully.\nFile name: %s", database, backupFileName))
-	}
-	return nil
+	log.Printf("CMD: %v", cmd)
+	return cmd.Run()
 }
+
+func handleBackupFailure(err error, backupFilePath, database string, telegramNotify bool) {
+	os.Remove(backupFilePath)
+	if telegramNotify {
+		sendTelegramNotification(fmt.Sprintf("❗️Error backing up database %s", database))
+	}
+}
+
+func handleBackupSuccess(telegramNotify bool, backupFilePath, database, backupFileName string) {
+	log.Printf("Database %s backed up successfully. File name: %s\n", database, backupFileName)
+	if telegramNotify {
+		sendTelegramNotification(fmt.Sprintf("🎉Database %s backed up successfully.\nFile name: %s", database, backupFileName))
+	}
+}
+
+func sendTelegramNotification(message string) {
+	if os.Getenv("TELEGRAM_BOT_TOKEN") != "" && os.Getenv("CHANNEL_ID") != "" {
+		channelID, _ := strconv.ParseInt(os.Getenv("CHANNEL_ID"), 10, 64)
+		_ = internal.SendMessage(channelID, message)
+	}
+}
+
 
 func cleanupBackups(backupDir string, maxBackupCount int) {
 	// List backup files
