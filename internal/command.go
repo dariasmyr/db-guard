@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"compress/gzip"
 	"log"
 	"os"
 	"os/exec"

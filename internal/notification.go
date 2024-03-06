@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"db_dump/internal"
 	"fmt"
 	"log"
 	"os"
@@ -22,9 +21,9 @@ func HandleBackupSuccess(telegramNotify bool, backupFilePath, database, backupFi
 	}
 }
 
-func SendTelegramNotification(message string) {
+func sendTelegramNotification(message string) {
 	if os.Getenv("TELEGRAM_BOT_TOKEN") != "" && os.Getenv("CHANNEL_ID") != "" {
 		channelID, _ := strconv.ParseInt(os.Getenv("CHANNEL_ID"), 10, 64)
-		_ = internal.SendMessage(channelID, message)
+		_ = SendMessage(channelID, message)
 	}
 }
