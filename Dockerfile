@@ -5,6 +5,6 @@ RUN apt-get update && apt-get install -y postgresql-client
 
 WORKDIR /app
 COPY . .
-RUN go build -o db-dump cmd/db-dump.go
+RUN go build -o db-guard cmd/db-guard.go
 
-CMD ["./db-dump"]
+CMD ["./db-guard"]
