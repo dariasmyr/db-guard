@@ -18,7 +18,17 @@ DB Guard is a Golang project aimed at streamlining database backup procedures wi
 You can run the application directly from the command line. You have two options:
 1. If you don't want to receive Telegram notifications:
 ```bash
-go run cmd/db-dump.go --host=<your-db-host> --port=<your-db-port> --user=<your-db-user> --password=<your-db-password> --compress --compression-level=<your-compression-level> --database=<your-db-name> --max-backup-count=<your-max-backup-count> --interval-seconds=<your-interval-in-seconds> --dir=<your-backups-dir>
+go run cmd/db-dump.go \
+  --host=<your-db-host> \
+  --port=<your-db-port> \
+  --user=<your-db-user> \
+  --password=<your-db-password> \
+  --compress \
+  --compression-level=<your-compression-level> \
+  --database=<your-db-name> \
+  --max-backup-count=<your-max-backup-count> \
+  --interval-seconds=<your-interval-in-seconds> \
+  --dir=<your-backups-dir>
 ```
 
 2. If you want to receive Telegram notifications:
@@ -26,7 +36,18 @@ go run cmd/db-dump.go --host=<your-db-host> --port=<your-db-port> --user=<your-d
 - Find your chat ID using [chat_id_echo_bot](https://t.me/chat_id_echo_bot)
 - Execute the following command:
 ```bash
-TELEGRAM_BOT_TOKEN=123456789:ABC-DEF1234ghIkl-zyx57W2v1u123ew11 CHANNEL_ID=11123456789 go run cmd/db-dump.go --host=<your-db-host> --port=<your-db-port> --user=<your-db-user> --password=<your-db-password> --compress --compression-level=<your-compression-level> --database=<your-db-name> --max-backup-count=<your-max-backup-count> --interval-seconds=<your-interval-in-seconds> --dir=<your-backups-dir> --telegram-notifications
+TELEGRAM_BOT_TOKEN=123456789:ABC-DEF1234ghIkl-zyx57W2v1u123ew11 
+CHANNEL_ID=11123456789 go run cmd/db-dump.go \
+  --host=<your-db-host> \
+  --port=<your-db-port> \
+  --user=<your-db-user> \
+  --password=<your-db-password> \
+  --compress \
+  --compression-level=<your-compression-level> \
+  --database=<your-db-name> \
+  --max-backup-count=<your-max-backup-count> \
+  --interval-seconds=<your-interval-in-seconds> \
+  --dir=<your-backups-dir>
 ```
 
 
