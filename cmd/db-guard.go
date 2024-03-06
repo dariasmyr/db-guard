@@ -1,16 +1,12 @@
 package main
 
 import (
-	"compress/gzip"
 	"db_dump/internal"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -72,18 +68,18 @@ func main() {
 			select {
 			case <-ticker.C:
 				// Check if backup for this database is already running
-				if internal.IsBackupRunning(internal.Database) {
+				if isBackupRunning(internal.Database) {
 					log.Printf("Backup for database %s is already running, skipping this cycle", internal.Database)
 					continue
 				}
 
 				// Mark backup for this database as running
-				internal.SetBackupRunning(internal.Database, true)
+				setBackupRunning(internal.Database, true)
 
 				go func() {
 					defer func() {
 						// Mark backup for this database as not running after completion
-						internal.SetBackupRunning(internal.Database, false)
+						setBackupRunning(internal.Database, false)
 					}()
 
 					log.Printf("Initial backup")
@@ -99,5 +95,23 @@ func main() {
 	select {
 	case <-backupDone:
 		log.Println("Backup completed")
+	}
+}
+
+
+func isBackupRunning(database string) bool {
+	statusMapMutex.Lock()
+	defer statusMapMutex.Unlock()
+	status, exists := statusMap[database]
+	return exists && status.running
+}
+
+func setBackupRunning(database string, running bool) {
+	statusMapMutex.Lock()
+	defer statusMapMutex.Unlock()
+	if status, exists := statusMap[database]; exists {
+		status.running = running
+	} else {
+		statusMap[database] = &DatabaseBackupStatus{running: running}
 	}
 }

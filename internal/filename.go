@@ -1,5 +1,9 @@
 package internal
 
+import (
+	"fmt"
+	"time"
+)
 
 func GenerateBackupFileName(database string, compress bool) string {
 	fileExtension := "sql"

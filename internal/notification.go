@@ -1,5 +1,12 @@
 package internal
 
+import (
+	"db_dump/internal"
+	"fmt"
+	"log"
+	"os"
+	"strconv"
+)
 
 func HandleBackupFailure(err error, backupFilePath, database string, telegramNotify bool) {
 	os.Remove(backupFilePath)

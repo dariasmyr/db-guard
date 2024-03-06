@@ -1,5 +1,14 @@
 package internal
 
+import (
+	"db_dump/internal"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+)
+
+
 func BackupDatabase(host string, port int, user string, password string, database string, backupDir string, compress bool, compressionLevel int, telegramNotify bool) error {
 	if password == "" {
 		return fmt.Errorf("database password is required")

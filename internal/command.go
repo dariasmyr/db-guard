@@ -1,5 +1,11 @@
 package internal
 
+import (
+	"log"
+	"os"
+	"os/exec"
+	"strconv"
+)
 
 func ConstructPgDumpCommandArgs(host string, port int, user string, database string) []string {
 	return []string{"-h", host, "-p", strconv.Itoa(port), "-U", user, "-d", database}
