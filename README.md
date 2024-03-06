@@ -18,7 +18,7 @@ DB Guard is a Golang project aimed at streamlining database backup procedures wi
 You can run the application directly from the command line. You have two options:
 1. If you don't want to receive Telegram notifications:
 ```bash
-go run cmd/db-dump.go \
+go run cmd/db-guard.go \
   --host=<your-db-host> \
   --port=<your-db-port> \
   --user=<your-db-user> \
@@ -37,7 +37,8 @@ go run cmd/db-dump.go \
 - Execute the following command:
 ```bash
 TELEGRAM_BOT_TOKEN=123456789:ABC-DEF1234ghIkl-zyx57W2v1u123ew11 
-CHANNEL_ID=11123456789 go run cmd/db-dump.go \
+CHANNEL_ID=11123456789
+go run cmd/db-guard.go \
   --host=<your-db-host> \
   --port=<your-db-port> \
   --user=<your-db-user> \
