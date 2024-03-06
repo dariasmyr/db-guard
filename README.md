@@ -62,6 +62,11 @@ docker compose up -d --build
 docker network create database
 ```
 
+### Option 3: Pull ready-made Docker Image from Docker Hub
+```bash
+docker pull dashasmyr/db-guard
+```
+
 Ensure you have provided necessary configurations in a `.env` file. Refer to the `.env-sample` for an example.
 
 ## Parameters
