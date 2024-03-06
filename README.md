@@ -15,7 +15,9 @@ DB Guard is a Golang project aimed at streamlining database backup procedures wi
 
 ## How to Run
 First but not least, clone the lib:
-`go get github.com/dariasmyr/db-guard`
+```bash
+go get github.com/dariasmyr/db-guard
+```
 
 ### Option 1: Run via Command Line
 You can run the application directly from the command line. You have two options:
