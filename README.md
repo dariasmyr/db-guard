@@ -57,6 +57,11 @@ You can also run the application using Docker by executing the following command
 ```bash
 docker compose up -d --build
 ```
+!! Note that if your database is running outside, you need to create a metwork so that DB Guard could access the docker container with your database.
+```bash
+docker network create database
+```
+
 Ensure you have provided necessary configurations in a `.env` file. Refer to the `.env-sample` for an example.
 
 ## Parameters
