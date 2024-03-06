@@ -1,5 +1,5 @@
 version: '3.3'
-
+## Create network if your database is running outside
 networks:
    database:
      external: true
