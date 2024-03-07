@@ -57,8 +57,9 @@ go run cmd/db-guard.go \
 ```
 
 
-### Option 2: Run via Docker Container
+### Option 2: Run via Docker
 **In this docker-compose.yml example we pull ready-made Docker Image (db-guard) from Docker Hub**
+
 **docker-compose.yml example**
 ```bash
 version: '3.3'
