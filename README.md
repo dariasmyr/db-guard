@@ -71,7 +71,6 @@ services:
       - .env
     volumes:
       - ./${DIR}:/app/${DIR}:rw
-      - ./data:/app/data:rw
 
   db:
     image: postgres:15-alpine3.17
