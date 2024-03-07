@@ -1,13 +1,7 @@
 version: '3.3'
-## Create network if your database is running outside
-networks:
-   database:
-     external: true
 
 services:
   app:
-    networks:
-       - database
     build:
       context: .
       dockerfile: Dockerfile
@@ -16,3 +10,17 @@ services:
       - .env
     volumes:
       - ./${DIR}:/app/${DIR}:rw
+
+    db:
+        image: postgres:15-alpine3.17
+        environment:
+            POSTGRES_USER: ${DATABASE_USER}
+            POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+            POSTGRES_DB: ${DATABASE_NAME}
+            PGDATA: /data/postgres
+        restart: unless-stopped
+        ports:
+            - 127.0.0.1:${DATABASE_PORT}:${DATABASE_PORT}
+        volumes:
+            - ./data/postgres:/data/postgres
+        command: -p ${DATABASE_PORT}
