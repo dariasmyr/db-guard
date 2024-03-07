@@ -58,16 +58,14 @@ go run cmd/db-guard.go \
 
 
 ### Option 2: Run via Docker Container
-
+**In this docker-compose.yml example we pull ready-made Docker Image (db-guard) from Docker Hub**
 **docker-compose.yml example**
 ```bash
 version: '3.3'
 
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  db_backup:
+    image: db-guard:latest
     restart: unless-stopped
     env_file:
       - .env
@@ -75,19 +73,19 @@ services:
       - ./${DIR}:/app/${DIR}:rw
       - ./data:/app/data:rw
 
-    db:
-        image: postgres:15-alpine3.17
-        environment:
-            POSTGRES_USER: ${DATABASE_USER}
-            POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-            POSTGRES_DB: ${DATABASE_NAME}
-            PGDATA: /data/postgres
-        restart: unless-stopped
-        ports:
-            - 127.0.0.1:${DATABASE_PORT}:${DATABASE_PORT}
-        volumes:
-            - ./data/postgres:/data/postgres
-        command: -p ${DATABASE_PORT}
+  db:
+    image: postgres:15-alpine3.17
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+      PGDATA: /data/postgres
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:${DATABASE_PORT}:${DATABASE_PORT}
+    volumes:
+      - ./data/postgres:/data/postgres
+    command: -p ${DATABASE_PORT}
 ```
 
 You can also run the application using Docker by executing the following command:
