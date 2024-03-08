@@ -14,6 +14,11 @@ DB Guard is a Golang project aimed at streamlining database backup procedures wi
 - PostgreSQL client (for PostgreSQL databases)
 
 ## How to Run
+First but not least, clone the lib:
+```bash
+go get github.com/dariasmyr/db-guard
+```
+
 ### Option 1: Run via Command Line
 You can run the application directly from the command line. You have two options:
 1. If you don't want to receive Telegram notifications:
@@ -52,14 +57,46 @@ go run cmd/db-guard.go \
 ```
 
 
-### Option 2: Run via Docker Container
+### Option 2: Run via Docker
+**In this docker-compose.yml example we pull ready-made Docker Image (db-guard) from Docker Hub**
+
+**docker-compose.yml example**
+```bash
+version: '3.3'
+
+services:
+  db_backup:
+    image: db-guard:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./${DIR}:/app/${DIR}:rw
+
+  db:
+    image: postgres:15-alpine3.17
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+      PGDATA: /data/postgres
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:${DATABASE_PORT}:${DATABASE_PORT}
+    volumes:
+      - ./data/postgres:/data/postgres
+    command: -p ${DATABASE_PORT}
+```
+
 You can also run the application using Docker by executing the following command:
 ```bash
 docker compose up -d --build
 ```
-!! Note that if your database is running outside, you need to create a metwork so that DB Guard could access the docker container with your database.
+**!! Note that if your database is running outside, you need to create a metwork so that DB Guard could access the docker container with your database.**
+
+### Option 3: Pull ready-made Docker Image from Docker Hub
 ```bash
-docker network create database
+docker pull dashasmyr/db-guard
 ```
 
 Ensure you have provided necessary configurations in a `.env` file. Refer to the `.env-sample` for an example.
