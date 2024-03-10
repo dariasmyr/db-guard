@@ -68,18 +68,35 @@ services:
   db_backup:
     image: db-guard:latest
     restart: unless-stopped
-    env_file:
-      - .env
+    environment:
+      - DATABASE_HOST=localhost
+      - DATABASE_PORT=5432
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres
+      - DATABASE_NAME=postgres
+      - HOST=${DATABASE_HOST}
+      - PORT=${DATABASE_PORT}
+      - USER=${DATABASE_USER}
+      - PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE=${DATABASE_NAME}
+      - COMPRESS=true
+      - COMPRESSION_LEVEL=-1
+      - MAX_BACKUP_COUNT=5
+      - INTERVAL_SECONDS=86400  // 1 day
+      - DIR=backups
+      - TELEGRAM_NOTIFICATIONS=true
+      - TELEGRAM_BOT_TOKEN=123456789:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
+      - CHANNEL_ID=-100123456789
     volumes:
-      - ./${DIR}:/app/${DIR}:rw
+      - ./backups:/app/backups:rw
 
   db:
     image: postgres:15-alpine3.17
     environment:
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: ${DATABASE_NAME}
-      PGDATA: /data/postgres
+      - POSTGRES_USER: ${DATABASE_USER}
+      - POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      - POSTGRES_DB: ${DATABASE_NAME}
+      - PGDATA: /data/postgres
     restart: unless-stopped
     ports:
       - 127.0.0.1:${DATABASE_PORT}:${DATABASE_PORT}

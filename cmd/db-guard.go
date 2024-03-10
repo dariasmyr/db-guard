@@ -54,6 +54,14 @@ func main() {
 
 	statusMap = make(map[string]*DatabaseBackupStatus)
 
+	// Perform initial backup
+	go func() {
+		log.Printf("Initial backup")
+		if err := internal.BackupDatabase(internal.Host, internal.Port, internal.User, internal.Password, internal.Database, internal.BackupDir, internal.Compress, internal.CompressionLevel, internal.TelegramNotify); err != nil {
+			log.Println("Error backing up database:", err)
+		}
+	}()
+
 	backupDone := make(chan struct{})
 
 	// Start main routine
@@ -82,7 +90,7 @@ func main() {
 						setBackupRunning(internal.Database, false)
 					}()
 
-					log.Printf("Initial backup")
+					log.Printf("Backup")
 					if err := internal.BackupDatabase(internal.Host, internal.Port, internal.User, internal.Password, internal.Database, internal.BackupDir, internal.Compress, internal.CompressionLevel, internal.TelegramNotify); err != nil {
 						log.Println("Error backing up database:", err)
 					}
@@ -97,7 +105,6 @@ func main() {
 		log.Println("Backup completed")
 	}
 }
-
 
 func isBackupRunning(database string) bool {
 	statusMapMutex.Lock()

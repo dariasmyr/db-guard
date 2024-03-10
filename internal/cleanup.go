@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
+	"time"
 )
 
 func CleanupBackups(backupDir string, maxBackupCount int) {
@@ -36,8 +38,19 @@ func CleanupBackups(backupDir string, maxBackupCount int) {
 
 func sortBackupFiles(files []string) {
 	sort.Slice(files, func(i, j int) bool {
-		file1Info, _ := os.Stat(files[i])
-		file2Info, _ := os.Stat(files[j])
-		return file1Info.ModTime().Before(file2Info.ModTime())
+		date1 := extractDateFromFileName(files[i])
+		date2 := extractDateFromFileName(files[j])
+		time1, _ := time.Parse("2006-01-02T15-04-05", date1)
+		time2, _ := time.Parse("2006-01-02T15-04-05", date2)
+		return time1.Before(time2)
 	})
+}
+
+func extractDateFromFileName(fileName string) string {
+	dateStartIndex := strings.Index(fileName, "-") + 1
+	dateEndIndex := strings.Index(fileName, ".sql")
+	if dateEndIndex == -1 {
+		dateEndIndex = len(fileName)
+	}
+	return fileName[dateStartIndex:dateEndIndex]
 }
