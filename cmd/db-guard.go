@@ -95,7 +95,6 @@ func main() {
 						log.Println("Error backing up database:", err)
 					}
 				}()
-				internal.CleanupBackups(internal.BackupDir, internal.MaxBackupCount)
 			}
 		}
 	}()

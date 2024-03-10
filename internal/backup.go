@@ -9,6 +9,7 @@ import (
 )
 
 func BackupDatabase(host string, port int, user string, password string, database string, backupDir string, compress bool, compressionLevel int, telegramNotify bool) error {
+	defer CleanupBackups(backupDir, MaxBackupCount)
 	if password == "" {
 		return fmt.Errorf("database password is required")
 	}
