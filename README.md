@@ -58,51 +58,23 @@ go run cmd/db-guard.go \
 
 
 ### Option 2: Run via Docker
-**In this docker-compose.yml example we pull ready-made Docker Image (db-guard) from Docker Hub**
+**In this docker container example we pull ready-made Docker Image (db-guard) from Docker Hub**
 
-**docker-compose.yml example**
+**docker-compose.yml**
 ```bash
-version: '3.3'
-
-services:
-  db_backup:
-    image: db-guard:latest
-    restart: unless-stopped
-    environment:
-      - DATABASE_HOST=localhost
-      - DATABASE_PORT=5432
-      - DATABASE_USER=postgres
-      - DATABASE_PASSWORD=postgres
-      - DATABASE_NAME=postgres
-      - HOST=${DATABASE_HOST}
-      - PORT=${DATABASE_PORT}
-      - USER=${DATABASE_USER}
-      - PASSWORD=${DATABASE_PASSWORD}
-      - DATABASE=${DATABASE_NAME}
-      - COMPRESS=true
-      - COMPRESSION_LEVEL=-1
-      - MAX_BACKUP_COUNT=5
-      - INTERVAL_SECONDS=86400  // 1 day
-      - DIR=backups
-      - TELEGRAM_NOTIFICATIONS=true
-      - TELEGRAM_BOT_TOKEN=123456789:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
-      - CHANNEL_ID=-100123456789
-    volumes:
-      - ./backups:/app/backups:rw
-
-  db:
-    image: postgres:15-alpine3.17
-    environment:
-      - POSTGRES_USER: ${DATABASE_USER}
-      - POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      - POSTGRES_DB: ${DATABASE_NAME}
-      - PGDATA: /data/postgres
-    restart: unless-stopped
-    ports:
-      - 127.0.0.1:${DATABASE_PORT}:${DATABASE_PORT}
-    volumes:
-      - ./data/postgres:/data/postgres
-    command: -p ${DATABASE_PORT}
+db_backup:
+      image: dashasmyr/db-guard:latest
+      restart: unless-stopped
+      environment:
+          - HOST=db
+          - PORT=${DATABASE_PORT}
+          - USER=${DATABASE_USER}
+          - PASSWORD=${DATABASE_PASSWORD}
+          - DATABASE=${DATABASE_NAME}
+          - MAX_BACKUP_COUNT=42 # keep one week
+          - INTERVAL_SECONDS=14400 # every 4 hours
+      volumes:
+        - ./data/db_backups:/app/backups:rw
 ```
 
 You can also run the application using Docker by executing the following command:
