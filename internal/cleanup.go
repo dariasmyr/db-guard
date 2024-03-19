@@ -22,8 +22,8 @@ func CleanupBackups(backupDir string, maxBackupCount int) {
 	sortBackupFiles(files)
 
 	// Delete excess backup files
-	log.Printf("Delete excess backup files, maxBackupCount: %d", maxBackupCount)
-	log.Printf("Length of files %d", len(files))
+	log.Printf("Delete excess backup files, (allowed: %d, now: %d files)", maxBackupCount, len(files))
+	log.Printf("Length of files: %d", len(files))
 	if len(files) > maxBackupCount {
 		filesToDelete := files[:len(files)-maxBackupCount]
 		for _, file := range filesToDelete {

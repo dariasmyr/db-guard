@@ -56,7 +56,7 @@ func main() {
 
 	// Perform initial backup
 	go func() {
-		log.Printf("Initial backup")
+		log.Printf("Initial backup started...")
 		if err := internal.BackupDatabase(internal.Host, internal.Port, internal.User, internal.Password, internal.Database, internal.BackupDir, internal.Compress, internal.CompressionLevel, internal.TelegramNotify); err != nil {
 			log.Println("Error backing up database:", err)
 		}
@@ -72,12 +72,12 @@ func main() {
 		defer ticker.Stop()
 
 		for {
-			log.Printf("Starting new backup cycle")
+			log.Printf("Database: \"%s\" backup routine started", internal.Database)
 			select {
 			case <-ticker.C:
 				// Check if backup for this database is already running
 				if isBackupRunning(internal.Database) {
-					log.Printf("Backup for database %s is already running, skipping this cycle", internal.Database)
+					log.Printf("Backup for database \"%s\" is already running, skipping this cycle", internal.Database)
 					continue
 				}
 
