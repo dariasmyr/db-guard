@@ -8,14 +8,17 @@ import (
 )
 
 func HandleBackupFailure(err error, backupFilePath, database string, telegramNotify bool) {
-	os.Remove(backupFilePath)
+	err = os.Remove(backupFilePath)
+	if err != nil {
+		log.Fatalf("❗️Error removing backup file \"%s\": %v", backupFilePath, err)
+	}
 	log.Printf("❗️Error backing up database \"%s\"", database)
 	if telegramNotify {
 		sendTelegramNotification(fmt.Sprintf("❗️Error backing up database \"%s\"", database))
 	}
 }
 
-func HandleBackupSuccess(telegramNotify bool, backupFilePath, database, backupFileName string) {
+func HandleBackupSuccess(telegramNotify bool, database, backupFileName string) {
 	log.Printf("Database \"%s\" backed up successfully. File name: \"%s\"\n", database, backupFileName)
 	if telegramNotify {
 		sendTelegramNotification(fmt.Sprintf("🎉Database \"%s\" backed up successfully.\nFile name: \"%s\"", database, backupFileName))

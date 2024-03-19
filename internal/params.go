@@ -2,6 +2,7 @@ package internal
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"strconv"
 )
@@ -20,7 +21,7 @@ var (
 	TelegramNotify   bool
 )
 
-func InitParams() {
+func InitParams() error {
 	// Read variable from environment and if not set, read from command line
 	flag.StringVar(&Host, "host", getEnv("HOST", ""), "Database host")
 	flag.IntVar(&Port, "port", getEnvAsInt("PORT", 5432), "Database port")
@@ -35,6 +36,19 @@ func InitParams() {
 	flag.BoolVar(&TelegramNotify, "telegram-notifications", getEnvAsBool("TELEGRAM_NOTIFICATIONS", false), "Telegram notifications")
 
 	flag.Parse()
+
+	// Check parameter validity
+	if MaxBackupCount <= 0 || MaxBackupCount > 100 {
+		return fmt.Errorf("invalid value for MaxBackupCount: %d (must be greater than 0 and less than 100)", MaxBackupCount)
+	}
+	if IntervalSec <= 0 {
+		return fmt.Errorf("invalid value for IntervalSec: %d (must be greater than 0)", IntervalSec)
+	}
+	if CompressionLevel < -1 || CompressionLevel > 9 {
+		return fmt.Errorf("invalid value for CompressionLevel: %d (must be between -1 and 9)", CompressionLevel)
+	}
+
+	return nil
 }
 
 func getEnv(key string, defaultValue string) string {

@@ -21,7 +21,10 @@ var (
 )
 
 func main() {
-	internal.InitParams()
+	err := internal.InitParams()
+	if err != nil {
+		log.Fatalf("Error initializing params: %v", err)
+	}
 	if os.Getenv("TELEGRAM_BOT_TOKEN") != "" && os.Getenv("CHANNEL_ID") != "" {
 		go internal.StartBot()
 	}
@@ -35,21 +38,23 @@ func main() {
 	// Check if pg_dump exists in the system
 	log.Printf("Check if pg_dump exists in the system")
 	if _, err := exec.LookPath("pg_dump"); err != nil {
-		log.Fatal("pg_dump not found in system PATH")
+		log.Fatalf("pg_dump not found in system PATH: %v", err)
 	}
 
 	// Ensure required flags are provided
 	log.Printf("Ensure required flags are provided")
 	if internal.User == "" || internal.Password == "" || internal.Database == "" {
 		flag.PrintDefaults()
-		os.Exit(1)
+		log.Fatalf("Required flags not provided")
 	}
 
 	// Ensure backup directory exists
 	log.Println("Ensure backup directory exists")
 	backupDataDir := filepath.Join(internal.BackupDir)
 	if _, err := os.Stat(backupDataDir); os.IsNotExist(err) {
-		os.Mkdir(backupDataDir, os.ModePerm)
+		if err := os.Mkdir(backupDataDir, os.ModePerm); err != nil {
+			log.Fatalf("Error creating backup directory: %v", err)
+		}
 	}
 
 	statusMap = make(map[string]*DatabaseBackupStatus)
@@ -58,7 +63,7 @@ func main() {
 	go func() {
 		log.Printf("Initial backup started...")
 		if err := internal.BackupDatabase(internal.Host, internal.Port, internal.User, internal.Password, internal.Database, internal.BackupDir, internal.Compress, internal.CompressionLevel, internal.TelegramNotify); err != nil {
-			log.Println("Error backing up database:", err)
+			log.Fatalf("Error performing initial backup: %v", err)
 		}
 	}()
 
@@ -92,7 +97,7 @@ func main() {
 
 					log.Printf("Backup")
 					if err := internal.BackupDatabase(internal.Host, internal.Port, internal.User, internal.Password, internal.Database, internal.BackupDir, internal.Compress, internal.CompressionLevel, internal.TelegramNotify); err != nil {
-						log.Println("Error backing up database:", err)
+						log.Printf("Error backing up database: %v", err)
 					}
 				}()
 			}

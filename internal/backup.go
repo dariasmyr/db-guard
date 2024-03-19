@@ -3,6 +3,7 @@ package internal
 import (
 	"compress/gzip"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -27,7 +28,12 @@ func BackupDatabase(host string, port int, user string, password string, databas
 	if err != nil {
 		return fmt.Errorf("failed to create backup file: %v", err)
 	}
-	defer backupFile.Close()
+	defer func(backupFile *os.File) {
+		err := backupFile.Close()
+		if err != nil {
+			log.Fatalf("failed to close backup file: %v", err)
+		}
+	}(backupFile)
 
 	compressionLevel = adjustCompressionLevel(compressionLevel)
 
@@ -35,7 +41,12 @@ func BackupDatabase(host string, port int, user string, password string, databas
 	if err != nil {
 		return fmt.Errorf("failed to create gzip writer: %v", err)
 	}
-	defer gzipWriter.Close()
+	defer func(gzipWriter *gzip.Writer) {
+		err := gzipWriter.Close()
+		if err != nil {
+			log.Fatalf("failed to close gzip writer: %v", err)
+		}
+	}(gzipWriter)
 
 	cmdArgs := ConstructPgDumpCommandArgs(host, port, user, database)
 
@@ -45,7 +56,7 @@ func BackupDatabase(host string, port int, user string, password string, databas
 		return fmt.Errorf("backup failed: %v", err)
 	}
 
-	HandleBackupSuccess(telegramNotify, backupFilePath, database, backupFileName)
+	HandleBackupSuccess(telegramNotify, database, backupFileName)
 
 	return nil
 }
