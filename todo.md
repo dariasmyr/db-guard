@@ -1,3 +1,3 @@
 - Replace telegram fo webhooks 
-- Add logs webhooks to console 
-- Add Makefile
+- Add logs webhooks to console
+- Add incremental backup
