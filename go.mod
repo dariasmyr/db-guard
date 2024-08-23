@@ -1,5 +1,5 @@
 module db_dump
 
-go 1.21
+go 1.23.0
 
-require github.com/go-telegram/bot v1.1.4
+require github.com/go-telegram/bot v1.7.1
