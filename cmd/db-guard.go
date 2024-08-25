@@ -25,9 +25,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error initializing params: %v", err)
 	}
-	if os.Getenv("TELEGRAM_BOT_TOKEN") != "" && os.Getenv("CHANNEL_ID") != "" {
-		go internal.StartBot()
-	}
 
 	log.Printf("Start parsing flags")
 
@@ -62,7 +59,7 @@ func main() {
 	// Perform initial backup
 	go func() {
 		log.Printf("Initial backup started...")
-		if err := internal.BackupDatabase(internal.Host, internal.Port, internal.User, internal.Password, internal.Database, internal.BackupDir, internal.Compress, internal.CompressionLevel, internal.TelegramNotify); err != nil {
+		if err := internal.BackupDatabase(internal.Host, internal.Port, internal.User, internal.Password, internal.Database, internal.BackupDir, internal.Compress, internal.CompressionLevel, internal.WebhookUrl); err != nil {
 			log.Fatalf("Error performing initial backup: %v", err)
 		}
 	}()
@@ -96,7 +93,7 @@ func main() {
 					}()
 
 					log.Printf("Backup")
-					if err := internal.BackupDatabase(internal.Host, internal.Port, internal.User, internal.Password, internal.Database, internal.BackupDir, internal.Compress, internal.CompressionLevel, internal.TelegramNotify); err != nil {
+					if err := internal.BackupDatabase(internal.Host, internal.Port, internal.User, internal.Password, internal.Database, internal.BackupDir, internal.Compress, internal.CompressionLevel, internal.WebhookUrl); err != nil {
 						log.Printf("Error backing up database: %v", err)
 					}
 				}()

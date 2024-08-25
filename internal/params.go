@@ -18,7 +18,7 @@ var (
 	Compress         bool
 	CompressionLevel int
 	BackupDir        string
-	TelegramNotify   bool
+	WebhookUrl       string
 )
 
 func InitParams() error {
@@ -33,7 +33,7 @@ func InitParams() error {
 	flag.BoolVar(&Compress, "compress", getEnvAsBool("COMPRESS", true), "Compress backups")
 	flag.IntVar(&CompressionLevel, "compression-level", getEnvAsInt("COMPRESSION_LEVEL", -1), "Compression level")
 	flag.StringVar(&BackupDir, "dir", getEnv("BACKUP_DIR", "backups"), "Backup directory")
-	flag.BoolVar(&TelegramNotify, "telegram-notifications", getEnvAsBool("TELEGRAM_NOTIFICATIONS", false), "Telegram notifications")
+	flag.StringVar(&WebhookUrl, "webhook-url", getEnv("WEBHOOK_URL", ""), "Webhook URL")
 
 	flag.Parse()
 

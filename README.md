@@ -7,7 +7,7 @@ DB Guard is a Golang project aimed at streamlining database backup procedures wi
 
 ### Key Advantages:
 - **Automated Backups**: Streamline database backup processes with scheduled intervals.
-- **Real-Time Notifications**: Receive instant updates on backup statuses via Telegram notifications.
+- **Real-Time Notifications**: Receive instant updates on backup statuses via webhooks.
 - **Optimized Storage**: Utilize parallel file archiving to maximize disk space efficiency.
 
 ## Prerequisites
@@ -20,40 +20,20 @@ go get github.com/dariasmyr/db-guard
 ```
 
 ### Option 1: Run via Command Line
-You can run the application directly from the command line. You have two options:
-1. If you don't want to receive Telegram notifications:
+You can run the application directly from the command line. 
 ```bash
 go run cmd/db-guard.go \
   --host=<your-db-host> \
   --port=<your-db-port> \
   --user=<your-db-user> \
   --password=<your-db-password> \
-  --compress \
-  --compression-level=<your-compression-level> \
+  --compress \ ## optional
+  --compression-level=<your-compression-level> \  ## optional
   --database=<your-db-name> \
   --max-backup-count=<your-max-backup-count> \
   --interval-seconds=<your-interval-in-seconds> \
-  --dir=<your-backups-dir>
-```
-
-2. If you want to receive Telegram notifications:
-- Create a bot using [BotFather](https://t.me/BotFather) and obtain the token in the format `123456789:ABC-DEF1234ghIkl-zyx57W2v1u123ew11`
-- Find your chat ID using [chat_id_echo_bot](https://t.me/chat_id_echo_bot)
-- Execute the following command:
-```bash
-TELEGRAM_BOT_TOKEN=123456789:ABC-DEF1234ghIkl-zyx57W2v1u123ew11 
-CHANNEL_ID=11123456789
-go run cmd/db-guard.go \
-  --host=<your-db-host> \
-  --port=<your-db-port> \
-  --user=<your-db-user> \
-  --password=<your-db-password> \
-  --compress \
-  --compression-level=<your-compression-level> \
-  --database=<your-db-name> \
-  --max-backup-count=<your-max-backup-count> \
-  --interval-seconds=<your-interval-in-seconds> \
-  --dir=<your-backups-dir>
+  --dir=<your-backups-dir> ## optional
+  --webhook-url=<your-webhook-url> ## optional
 ```
 
 
@@ -73,6 +53,7 @@ db_backup:
           - DATABASE=${DATABASE_NAME}
           - MAX_BACKUP_COUNT=42 # keep one week
           - INTERVAL_SECONDS=14400 # every 4 hours
+          - WEBHOOK_URL=${WEBHOOK_URL} # optional
       volumes:
         - ./data/db_backups:/app/backups:rw
 ```
@@ -95,13 +76,13 @@ Ensure you have provided necessary configurations in a `.env` file. Refer to the
 - `--port`: Port number of the database server
 - `--user`: Username for authentication
 - `--password`: Password for authentication
-- `--compress`: Enable compression for backup files
-- `--compression-level`: Level of compression (Default: -1)
+- `--compress`: Enable compression for backup files (Optional)
+- `--compression-level`: Level of compression (Default: -1) (Optional)
 - `--database`: Name of the database to backup
 - `--max-backup-count`: Maximum number of backup files to retain
 - `--interval-seconds`: Interval between each backup (in seconds)
-- `--dir`: Directory to store backup files
-- `--telegram-notifications`: Enable Telegram notifications (optional)
+- `--dir`: Directory to store backup files (Optional)
+- `--webhook-url`: Webhook URL for notifications (Optional)
 
 ## Compression Levels
 You can specify the compression level using the following options:

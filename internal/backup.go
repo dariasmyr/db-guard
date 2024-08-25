@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func BackupDatabase(host string, port int, user string, password string, database string, backupDir string, compress bool, compressionLevel int, telegramNotify bool) error {
+func BackupDatabase(host string, port int, user string, password string, database string, backupDir string, compress bool, compressionLevel int, webhookUrl string) error {
 	defer CleanupBackups(backupDir, MaxBackupCount)
 	if password == "" {
 		return fmt.Errorf("database password is required")
@@ -52,11 +52,11 @@ func BackupDatabase(host string, port int, user string, password string, databas
 
 	err = ExecuteBackupCommand(cmdArgs, compress, gzipWriter, backupFile)
 	if err != nil {
-		HandleBackupFailure(err, backupFilePath, database, telegramNotify)
+		HandleBackupFailure(err, backupFilePath, database, webhookUrl)
 		return fmt.Errorf("backup failed: %v", err)
 	}
 
-	HandleBackupSuccess(telegramNotify, database, backupFileName)
+	HandleBackupSuccess(database, backupFileName, webhookUrl)
 
 	return nil
 }
