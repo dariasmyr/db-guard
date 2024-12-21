@@ -115,5 +115,5 @@ You can specify the compression level using the following options:
 Give a ⭐️ if this project helped you!
 
 ## License
-Copyright © 2023 [dasha.smyr@gmail.com](https://github.com/dariasmyr).<br />
+Copyright © 2025 [dasha.smyr@gmail.com](https://github.com/dariasmyr).<br />
 This project is [MIT](LICENSE) licensed.
